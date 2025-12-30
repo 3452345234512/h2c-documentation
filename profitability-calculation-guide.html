@@ -273,47 +273,256 @@
                 </div>
             </div>
 
-            <h2>2. Пошаговый расчет</h2>
+            <h2>2. Легенда переменных</h2>
+
+            <div class="section">
+                <h3>Основные переменные в формулах расчета:</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Переменная</th>
+                            <th>Описание</th>
+                            <th>Единицы измерения</th>
+                            <th>Откуда берется</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>TX_user</strong></td>
+                            <td>Общее количество токенов пользователя (хешрейт)</td>
+                            <td>Токены (TX)</td>
+                            <td><code>hashrate + game_hashrate</code> из таблицы <code>users</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>hashrate</strong></td>
+                            <td>Токены для майнинга (купленные + реферальные + из достижений)</td>
+                            <td>Токены (TX)</td>
+                            <td>Поле <code>hashrate</code> в таблице <code>users</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>game_hashrate</strong></td>
+                            <td>Токены для игр (выигранные в дуэлях)</td>
+                            <td>Токены (TX)</td>
+                            <td>Поле <code>game_hashrate</code> в таблице <code>users</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>tokens_win</strong></td>
+                            <td>Токены, полученные за выигрыши в играх</td>
+                            <td>Токены (TX)</td>
+                            <td>Поле <code>tokens_win</code> в таблице <code>users</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>total_system_tx</strong></td>
+                            <td>Сумма всех токенов майнинга (hashrate) всех пользователей в системе</td>
+                            <td>Токены (TX)</td>
+                            <td><code>SUM(hashrate)</code> из таблицы <code>users</code> (БЕЗ game_hashrate и tokens_win)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>THS_BTC_DAY</strong></td>
+                            <td>Доходность в Bitcoin за 1 Terahash (TH/s) за 24 часа</td>
+                            <td>BTC/TH/s/день</td>
+                            <td>Рассчитывается из Trustpool API: <code>reward / (hashrate / 1e12)</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>btc_price_usd</strong></td>
+                            <td>Курс Bitcoin в долларах США</td>
+                            <td>USD/BTC</td>
+                            <td>Из CoinLore API, сохраняется в таблице <code>rates</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>income_per_tx_usd</strong></td>
+                            <td>Доход в USD за 1 токен за 24 часа</td>
+                            <td>USD/TX/день</td>
+                            <td>Рассчитывается: <code>THS_BTC_DAY × btc_price_usd</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>grossIncome</strong></td>
+                            <td>Валовый доход пользователя за день</td>
+                            <td>USD</td>
+                            <td>Рассчитывается: <code>TX_user × income_per_tx_usd</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>payout_percent</strong></td>
+                            <td>Процент выплаты пользователям (комиссия платформы = 100% - payout_percent)</td>
+                            <td>%</td>
+                            <td>Из конфига <code>DAILY_INCOME_PER_TX_USD</code>, по умолчанию 85%</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Payout</strong></td>
+                            <td>Выплата пользователю после вычета комиссии платформы</td>
+                            <td>USD</td>
+                            <td>Рассчитывается: <code>grossIncome × (payout_percent / 100)</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>electricity_tariff_usd</strong></td>
+                            <td>Тариф за электроэнергию</td>
+                            <td>USD за кВт</td>
+                            <td>Из конфига <code>ELECTRICITY_TARIFF_USD</code>, по умолчанию 0.12 USD/кВт</td>
+                        </tr>
+                        <tr>
+                            <td><strong>energy_consumption_kw</strong></td>
+                            <td>Энергопотребление системы майнинга</td>
+                            <td>кВт</td>
+                            <td>Из конфига <code>ENERGY_CONSUMPTION_KW</code>, по умолчанию 1.8 кВт</td>
+                        </tr>
+                        <tr>
+                            <td><strong>totalElectricityCost</strong></td>
+                            <td>Общая стоимость электроэнергии системы за день</td>
+                            <td>USD</td>
+                            <td>Рассчитывается: <code>electricity_tariff_usd × energy_consumption_kw × 24</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>userElectricityCost</strong></td>
+                            <td>Доля пользователя в стоимости электроэнергии (пропорционально его токенам)</td>
+                            <td>USD</td>
+                            <td>Рассчитывается: <code>(TX_user / total_system_tx) × totalElectricityCost</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>dailyIncomeUSD</strong></td>
+                            <td>Финальный доход пользователя за день в USD</td>
+                            <td>USD</td>
+                            <td>Рассчитывается: <code>max(0, Payout - userElectricityCost)</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>dailyBtcTotal</strong></td>
+                            <td>Доход пользователя за день в Bitcoin</td>
+                            <td>BTC</td>
+                            <td>Рассчитывается: <code>dailyIncomeUSD / btc_price_usd</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>amount_for_h2c</strong></td>
+                            <td>Начисление в BTC на 1 токен пользователя</td>
+                            <td>BTC/TX</td>
+                            <td>Рассчитывается: <code>dailyBtcTotal / TX_user</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>amount_mining</strong></td>
+                            <td>Начисление за токены майнинга (hashrate)</td>
+                            <td>BTC</td>
+                            <td>Рассчитывается: <code>hashrate × amount_for_h2c</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>amount_win</strong></td>
+                            <td>Начисление за выигранные токены (tokens_win)</td>
+                            <td>BTC</td>
+                            <td>Рассчитывается: <code>tokens_win × amount_for_h2c</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>amount</strong></td>
+                            <td>Итоговое начисление пользователю за день</td>
+                            <td>BTC</td>
+                            <td>Рассчитывается: <code>amount_mining + amount_win</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="important" style="margin-top: 20px;">
+                    <strong>Важно понимать:</strong>
+                    <ul style="margin-top: 10px;">
+                        <li><strong>TX_user</strong> = <code>hashrate + game_hashrate</code> - используется для расчета доли пользователя в системе</li>
+                        <li><strong>total_system_tx</strong> = только <code>SUM(hashrate)</code> БЕЗ game_hashrate и tokens_win - используется для распределения затрат на электроэнергию</li>
+                        <li><strong>amount_mining</strong> начисляется только на <code>hashrate</code>, а не на весь TX_user</li>
+                        <li><strong>amount_win</strong> начисляется только на <code>tokens_win</code></li>
+                        <li>Все начисления хранятся в таблице <code>accruals</code> с разбивкой на <code>amount_mining</code> и <code>amount_win</code></li>
+                    </ul>
+                </div>
+            </div>
+
+            <h2>3. Пошаговый расчет</h2>
 
             <div class="section">
                 <h3>Шаг 1: Расчет дохода за 1 токен (TX) в USD</h3>
                 <div class="formula">
                     income_per_tx_usd = THS_BTC_DAY × btc_price_usd
                 </div>
-                <p>Где <code>THS_BTC_DAY</code> - доход в BTC за 1 Terahash (TH/s) за 24 часа</p>
+                <p><strong>Где:</strong></p>
+                <ul>
+                    <li><code>THS_BTC_DAY</code> - доход в BTC за 1 Terahash (TH/s) за 24 часа (из Trustpool API)</li>
+                    <li><code>btc_price_usd</code> - курс Bitcoin в USD (из CoinLore API)</li>
+                </ul>
 
                 <h3>Шаг 2: Валовый доход пользователя</h3>
                 <div class="formula">
                     grossIncome = TX_user × income_per_tx_usd
                 </div>
-                <p>Где <code>TX_user</code> = <code>hashrate</code> + <code>game_hashrate</code> (общее количество токенов пользователя)</p>
+                <p><strong>Где:</strong></p>
+                <ul>
+                    <li><code>TX_user</code> = <code>hashrate</code> + <code>game_hashrate</code> (общее количество токенов пользователя)</li>
+                    <li><code>income_per_tx_usd</code> - доход в USD за 1 токен за 24 часа (из Шага 1)</li>
+                    <li><strong>Результат:</strong> общий доход пользователя в USD до вычета комиссий и затрат</li>
+                </ul>
 
                 <h3>Шаг 3: Выплата после комиссии</h3>
                 <div class="formula">
-                    payout = grossIncome × (payout_percent / 100)
+                    Payout = grossIncome × (payout_percent / 100)
                 </div>
-                <p>По умолчанию <code>payout_percent = 85%</code> (15% комиссия платформы)</p>
+                <p><strong>Где:</strong></p>
+                <ul>
+                    <li><code>grossIncome</code> - валовый доход пользователя (из Шага 2)</li>
+                    <li><code>payout_percent</code> - процент выплаты (из конфига <code>DAILY_INCOME_PER_TX_USD</code>)</li>
+                    <li>По умолчанию <code>payout_percent = 85%</code> (15% комиссия платформы)</li>
+                    <li><strong>Результат:</strong> выплата пользователю в USD после вычета комиссии платформы</li>
+                </ul>
 
                 <h3>Шаг 4: Расчет стоимости электроэнергии</h3>
                 <div class="formula-step">
-                    <strong>Общая стоимость электроэнергии системы:</strong><br>
-                    totalElectricityCost = tariff × energy × 24
+                    <strong>Общая стоимость электроэнергии системы за день:</strong><br>
+                    totalElectricityCost = electricity_tariff_usd × energy_consumption_kw × 24
                 </div>
+                <p><strong>Где:</strong></p>
+                <ul>
+                    <li><code>electricity_tariff_usd</code> - тариф за 1 кВт (из конфига <code>ELECTRICITY_TARIFF_USD</code>, по умолчанию 0.12 USD/кВт)</li>
+                    <li><code>energy_consumption_kw</code> - энергопотребление системы (из конфига <code>ENERGY_CONSUMPTION_KW</code>, по умолчанию 1.8 кВт)</li>
+                    <li>24 - количество часов в сутках</li>
+                    <li><strong>Результат:</strong> общая стоимость электроэнергии для всей системы за день в USD</li>
+                </ul>
+
                 <div class="formula-step">
-                    <strong>Доля пользователя в стоимости:</strong><br>
+                    <strong>Доля пользователя в стоимости электроэнергии:</strong><br>
                     userElectricityCost = (TX_user / total_system_tx) × totalElectricityCost
                 </div>
+                <p><strong>Где:</strong></p>
+                <ul>
+                    <li><code>TX_user</code> - токены пользователя (<code>hashrate + game_hashrate</code>)</li>
+                    <li><code>total_system_tx</code> - сумма всех <code>hashrate</code> всех пользователей (БЕЗ game_hashrate)</li>
+                    <li><code>totalElectricityCost</code> - общая стоимость электроэнергии системы (из расчета выше)</li>
+                    <li><strong>Важно:</strong> затраты распределяются пропорционально доле токенов пользователя в системе</li>
+                    <li><strong>Результат:</strong> доля пользователя в затратах на электроэнергию в USD</li>
+                </ul>
 
-                <h3>Шаг 5: Финальный доход</h3>
+                <h3>Шаг 5: Финальный доход в USD</h3>
                 <div class="formula">
-                    dailyIncomeUSD = max(0, payout - userElectricityCost)
+                    dailyIncomeUSD = max(0, Payout - userElectricityCost)
                 </div>
+                <p><strong>Где:</strong></p>
+                <ul>
+                    <li><code>Payout</code> - выплата пользователю после комиссии (из Шага 3)</li>
+                    <li><code>userElectricityCost</code> - доля пользователя в затратах на электроэнергию (из Шага 4)</li>
+                    <li><code>max(0, ...)</code> - гарантирует, что доход не может быть отрицательным</li>
+                    <li><strong>Результат:</strong> чистый доход пользователя за день в USD</li>
+                </ul>
 
                 <h3>Шаг 6: Конвертация в BTC</h3>
                 <div class="formula">
-                    dailyBtcTotal = dailyIncomeUSD / btc_price_usd<br><br>
-                    amount_per_token = dailyBtcTotal / TX_user
+                    dailyBtcTotal = dailyIncomeUSD / btc_price_usd
                 </div>
+                <p><strong>Где:</strong></p>
+                <ul>
+                    <li><code>dailyIncomeUSD</code> - доход за день в USD (из Шага 5)</li>
+                    <li><code>btc_price_usd</code> - курс Bitcoin в USD (из CoinLore API)</li>
+                    <li><strong>Результат:</strong> доход пользователя за день в Bitcoin</li>
+                </ul>
+
+                <div class="formula">
+                    amount_for_h2c = dailyBtcTotal / TX_user
+                </div>
+                <p><strong>Где:</strong></p>
+                <ul>
+                    <li><code>dailyBtcTotal</code> - доход за день в BTC (из расчета выше)</li>
+                    <li><code>TX_user</code> - общее количество токенов пользователя (<code>hashrate + game_hashrate</code>)</li>
+                    <li><strong>Результат:</strong> начисление в BTC на 1 токен пользователя</li>
+                </ul>
             </div>
 
             <h2>3. Источники данных (API Endpoints)</h2>
