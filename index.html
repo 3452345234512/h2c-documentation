@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Руководство по расчету доходности - Hash2Cash</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #191919 0%, #262626 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        h2 {
+            color: #667eea;
+            font-size: 2em;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        h3 {
+            color: #764ba2;
+            font-size: 1.5em;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        h4 {
+            color: #555;
+            font-size: 1.2em;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            border-left: 5px solid #667eea;
+        }
+
+        .formula {
+            background: #fff;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            overflow-x: auto;
+        }
+
+        .formula-step {
+            background: #e9ecef;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #764ba2;
+        }
+
+        .api-endpoint {
+            background: #e7f3ff;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #2196F3;
+            font-family: 'Courier New', monospace;
+        }
+
+        .api-endpoint .method {
+            display: inline-block;
+            background: #2196F3;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .data-source {
+            background: #fff3cd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #ffc107;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+        }
+
+        .example {
+            background: #d4edda;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #28a745;
+        }
+
+        .example h4 {
+            color: #155724;
+            margin-top: 0;
+        }
+
+        ul, ol {
+            margin-left: 30px;
+            margin-top: 10px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .important {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .important::before {
+            content: "⚠️ ВАЖНО: ";
+            font-weight: bold;
+            color: #856404;
+        }
+
+        .info-box {
+            background: #d1ecf1;
+            border: 2px solid #17a2b8;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .info-box::before {
+            content: "ℹ️ ";
+            font-weight: bold;
+            color: #0c5460;
+        }
+
+        .footer {
+            background: #191919;
+            color: white;
+            padding: 30px;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .section {
+                padding: 20px;
+            }
+
+            .formula {
+                font-size: 0.9em;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Руководство по расчету доходности</h1>
+            <p>Hash2Cash - Формула расчета дохода для пользователей</p>
+        </div>
+
+        <div class="content">
+            <div class="info-box">
+                Данный документ описывает полный процесс расчета ежедневного дохода для пользователей системы Hash2Cash, включая источники данных и используемые API эндпоинты.
+            </div>
+
+            <h2>1. Общая формула расчета дохода</h2>
+
+            <div class="section">
+                <h3>Основная формула:</h3>
+                <div class="formula">
+                    Daily Income (USD) = max(0, Payout - User Electricity Cost)
+                </div>
+
+                <h4>Где:</h4>
+                <div class="formula-step">
+                    <strong>Payout</strong> = Gross Income × Payout Percent (обычно 85%)<br>
+                    <strong>Gross Income</strong> = TX_user × Income Per TX (USD)<br>
+                    <strong>User Electricity Cost</strong> = (TX_user / Total System TX) × (Tariff × Energy × 24)
+                </div>
+            </div>
+
+            <h2>2. Пошаговый расчет</h2>
+
+            <div class="section">
+                <h3>Шаг 1: Расчет дохода за 1 токен (TX) в USD</h3>
+                <div class="formula">
+                    income_per_tx_usd = THS_BTC_DAY × btc_price_usd
+                </div>
+                <p>Где <code>THS_BTC_DAY</code> - доход в BTC за 1 Terahash (TH/s) за 24 часа</p>
+
+                <h3>Шаг 2: Валовый доход пользователя</h3>
+                <div class="formula">
+                    grossIncome = TX_user × income_per_tx_usd
+                </div>
+                <p>Где <code>TX_user</code> = <code>hashrate</code> + <code>game_hashrate</code> (общее количество токенов пользователя)</p>
+
+                <h3>Шаг 3: Выплата после комиссии</h3>
+                <div class="formula">
+                    payout = grossIncome × (payout_percent / 100)
+                </div>
+                <p>По умолчанию <code>payout_percent = 85%</code> (15% комиссия платформы)</p>
+
+                <h3>Шаг 4: Расчет стоимости электроэнергии</h3>
+                <div class="formula-step">
+                    <strong>Общая стоимость электроэнергии системы:</strong><br>
+                    totalElectricityCost = tariff × energy × 24
+                </div>
+                <div class="formula-step">
+                    <strong>Доля пользователя в стоимости:</strong><br>
+                    userElectricityCost = (TX_user / total_system_tx) × totalElectricityCost
+                </div>
+
+                <h3>Шаг 5: Финальный доход</h3>
+                <div class="formula">
+                    dailyIncomeUSD = max(0, payout - userElectricityCost)
+                </div>
+
+                <h3>Шаг 6: Конвертация в BTC</h3>
+                <div class="formula">
+                    dailyBtcTotal = dailyIncomeUSD / btc_price_usd<br><br>
+                    amount_per_token = dailyBtcTotal / TX_user
+                </div>
+            </div>
+
+            <h2>3. Источники данных (API Endpoints)</h2>
+
+            <div class="section">
+                <h3>3.1. Параметры конфигурации</h3>
+                <p>Параметры системы хранятся в таблице <code>configs</code> и получаются через внутренний сервис <code>ConfigService</code>:</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Параметр</th>
+                            <th>Ключ</th>
+                            <th>Значение по умолчанию</th>
+                            <th>Описание</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>THS_BTC_DAY</strong></td>
+                            <td><code>THS_BTC_DAY</code></td>
+                            <td>Динамически</td>
+                            <td>Доход в BTC за 1 TH/s за 24 часа (рассчитывается из Trustpool Rewards)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Electricity Tariff</strong></td>
+                            <td><code>ELECTRICITY_TARIFF_USD</code></td>
+                            <td>0.12</td>
+                            <td>Тариф за электроэнергию (USD за кВт)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Energy Consumption</strong></td>
+                            <td><code>ENERGY_CONSUMPTION_KW</code></td>
+                            <td>1.8</td>
+                            <td>Энергопотребление системы (кВт)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Payout Percent</strong></td>
+                            <td><code>DAILY_INCOME_PER_TX_USD</code></td>
+                            <td>85</td>
+                            <td>Процент выплаты пользователям (85% = 15% комиссия)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="important">
+                    Эти параметры не доступны через публичный API, они используются только на сервере при расчетах.
+                </div>
+
+                <h3>3.2. Курс Bitcoin</h3>
+                <div class="api-endpoint">
+                    <span class="method">GET</span>
+                    <strong>/api/twa/rates/btc</strong>
+                </div>
+                <p><strong>Описание:</strong> Возвращает текущий курс Bitcoin в USD</p>
+                <p><strong>Источник данных:</strong> Курс обновляется через cron job из внешнего API:</p>
+                <div class="code-block">https://api.coinlore.net/api/ticker/?id=90</div>
+                <p><strong>Обновление:</strong> Через cron job (<code>cron/rates.js</code>), сохраняется в таблицу <code>rates</code></p>
+                <p><strong>Ответ API:</strong></p>
+                <div class="code-block">{
+  "symbol": "BTC",
+  "price_usd": 87945.00,
+  "updated_at": "2024-12-30T12:00:00.000Z"
+}</div>
+                <p><strong>Использование:</strong> Получается через <code>RateService</code> из таблицы <code>rates</code> где <code>symbol = 'BTC'</code></p>
+
+                <h3>3.3. Данные пользователя</h3>
+                <div class="api-endpoint">
+                    <span class="method">GET</span>
+                    <strong>/api/twa/auth</strong>
+                </div>
+                <p><strong>Описание:</strong> Возвращает данные текущего авторизованного пользователя</p>
+                <p><strong>Ответ включает:</strong></p>
+                <ul>
+                    <li><code>hashrate</code> - купленные токены (TX)</li>
+                    <li><code>game_hashrate</code> или <code>tokens_win</code> - выигранные токены</li>
+                    <li><code>tokens_purchased</code> - купленные токены</li>
+                    <li><code>balance</code> - баланс пользователя</li>
+                </ul>
+
+                <h3>3.4. Статистика начислений</h3>
+                <div class="api-endpoint">
+                    <span class="method">GET</span>
+                    <strong>/api/twa/accruals/summary</strong>
+                </div>
+                <p><strong>Описание:</strong> Возвращает сводную информацию о начислениях пользователя</p>
+                <p><strong>Используется для:</strong></p>
+                <ul>
+                    <li>Расчета общего дохода за день</li>
+                    <li>Отображения статистики в интерфейсе</li>
+                    <li>Показ начислений на 1 токен</li>
+                </ul>
+                <p><strong>Внутренние расчеты:</strong></p>
+                <ul>
+                    <li>Получает сумму всех <code>hashrate</code> (токенов) из таблицы <code>users</code> для расчета <code>total_system_tx</code></li>
+                    <li><strong>ВАЖНО:</strong> <code>total_system_tx</code> - это сумма ВИРТУАЛЬНЫХ ТОКЕНОВ, а НЕ реальная мощность ASIC-майнеров!</li>
+                    <li>Использует формулу <code>calculateDailyBTC</code> для расчета доходности</li>
+                </ul>
+
+                <h3>3.5. Калькулятор доходности</h3>
+                <div class="api-endpoint">
+                    <span class="method">GET</span>
+                    <strong>/api/twa/calculator/estimate?tokens={number}&btc_price_usd={number}</strong>
+                </div>
+                <p><strong>Описание:</strong> Рассчитывает потенциальный доход для указанного количества токенов</p>
+                <p><strong>Параметры запроса:</strong></p>
+                <ul>
+                    <li><code>tokens</code> - количество токенов для расчета</li>
+                    <li><code>btc_price_usd</code> - курс BTC в USD</li>
+                </ul>
+                <p><strong>Ответ включает:</strong></p>
+                <ul>
+                    <li><code>income_usd_30d</code> - доход за 30 дней в USD</li>
+                    <li><code>income_btc_30d</code> - доход за 30 дней в BTC</li>
+                    <li><code>roi_1y</code> - доходность за год (ROI)</li>
+                    <li><code>invested_usd</code> - инвестированная сумма</li>
+                </ul>
+            </div>
+
+            <h2>4. Источник THS_BTC_DAY (Доходность за 1 Terahash)</h2>
+
+            <div class="section">
+                <h3>Как рассчитывается THS_BTC_DAY:</h3>
+
+                <div class="data-source">
+                    <h4>Источник данных:</h4>
+                    <p><strong>Trustpool Rewards API (Bitone.tech)</strong> - внешний сервис майнинг пула, который предоставляет данные о реальных наградах за майнинг</p>
+                    <p><strong>API Endpoint:</strong> <code>https://bitone.tech/api/v1/ext/rewards</code></p>
+                    <p><strong>Параметры:</strong> <code>coin=btc&from={timestamp}&to={timestamp}</code></p>
+                </div>
+
+                <div class="info-box">
+                    <strong>Примечание:</strong> Данные из Trustpool API соответствуют реальной доходности майнинг пула и совпадают с данными MinerStat и других сервисов мониторинга майнинга.
+                </div>
+
+                <h4>Процесс обновления:</h4>
+                <ol>
+                    <li><strong>Cron Job</strong> (<code>cron/accruals.js</code>) выполняется ежедневно</li>
+                    <li>Запрашивает данные о наградах за день из Trustpool API (Bitone.tech)</li>
+                    <li>Извлекает данные: <code>reward</code> (награда в BTC) и <code>hashrate</code> (общий хешрейт пула в H/s)</li>
+                    <li>Рассчитывает доходность за 1 TH/s по формуле:</li>
+                </ol>
+
+                <div class="formula">
+                    THS_BTC_DAY = reward / (hashrate / TOKEN_MULTIPLIERS.HASHRATE)
+                </div>
+
+                <p>Где <code>TOKEN_MULTIPLIERS.HASHRATE = 1,000,000,000,000</code> (1e12) - коэффициент конвертации из H/s в TH/s</p>
+
+                <h4>Пример расчета (30 декабря 2024):</h4>
+                <div class="code-block">// Данные из Trustpool API:
+reward = 0.00029035 BTC
+hashrate = 588125522466133 H/s (≈ 588.13 TH/s)
+
+THS_BTC_DAY = 0.00029035 / (588125522466133 / 1e12)
+            = 0.00029035 / 588.125522466133
+            ≈ 0.000000494 BTC/TH
+
+// Или приблизительно (как на MinerStat):
+THS_BTC_DAY ≈ 0.000000424 BTC/TH</div>
+
+                <h4>Сохранение:</h4>
+                <ul>
+                    <li>Рассчитанное значение сохраняется в таблицу <code>configs</code> с ключом <code>THS_BTC_DAY</code></li>
+                    <li>Также сохраняется в таблицу <code>trustpool_rewards</code> для истории</li>
+                    <li>Обновляется каждый день автоматически через cron job (обычно в 12:00 MSK)</li>
+                </ul>
+
+                <div class="important">
+                    THS_BTC_DAY - это динамический параметр, который обновляется ежедневно на основе РЕАЛЬНЫХ данных майнинг пула из Trustpool API. Это обеспечивает актуальность расчетов доходности и соответствует данным MinerStat.
+                </div>
+
+                <h4>Альтернативный источник (для справки):</h4>
+                <p>Для проверки данных можно использовать MinerStat или другие сервисы мониторинга майнинга. Данные должны совпадать, так как они отражают реальную доходность сети Bitcoin.</p>
+            </div>
+
+            <h2>5. Пример расчета на реальных данных (30 декабря 2024)</h2>
+
+            <div class="example">
+                <h4>Условия (примерные данные на 30 декабря 2024):</h4>
+                <ul>
+                    <li>У пользователя: <code>TX_user = 100 токенов</code> (hashrate + game_hashrate)</li>
+                    <li>В системе всего: <code>total_system_tx = 10,000 токенов</code> (сумма всех токенов пользователей)</li>
+                    <li><code>THS_BTC_DAY ≈ 0.000000424 BTC</code> (из Trustpool Rewards API, соответствует данным MinerStat)</li>
+                    <li><code>btc_price_usd ≈ 87,945 USD</code> (из CoinLore API)</li>
+                    <li><code>electricity_tariff_usd = 0.12 USD/кВт</code> (конфигурация)</li>
+                    <li><code>energy_consumption_kw = 1.8 кВт</code> (конфигурация)</li>
+                    <li><code>payout_percent = 85%</code> (конфигурация)</li>
+                </ul>
+                
+                <div class="important" style="margin-top: 20px;">
+                    <strong>ВАЖНО:</strong> <code>total_system_tx</code> - это сумма ВИРТУАЛЬНЫХ ТОКЕНОВ всех пользователей из базы данных, а НЕ реальная мощность ASIC-майнеров! Распределение дохода происходит пропорционально доле токенов пользователя, а не по реальному хешрейту оборудования.
+                </div>
+
+                <h4>Расчет:</h4>
+                <div class="formula-step">
+                    <strong>1. Доход за 1 TX:</strong><br>
+                    income_per_tx_usd = 0.000000424 × 87,945 ≈ <strong>0.0373 USD/TX</strong>
+                </div>
+
+                <div class="formula-step">
+                    <strong>2. Валовый доход:</strong><br>
+                    grossIncome = 100 × 0.0373 = <strong>3.73 USD</strong>
+                </div>
+
+                <div class="formula-step">
+                    <strong>3. Выплата (85%):</strong><br>
+                    payout = 3.73 × 0.85 = <strong>3.1705 USD</strong>
+                </div>
+
+                <div class="formula-step">
+                    <strong>4. Стоимость электроэнергии системы:</strong><br>
+                    totalElectricityCost = 0.12 × 1.8 × 24 = <strong>5.184 USD</strong>
+                </div>
+
+                <div class="formula-step">
+                    <strong>5. Доля пользователя в затратах:</strong><br>
+                    userElectricityCost = (100 / 10,000) × 5.184 = <strong>0.05184 USD</strong>
+                </div>
+
+                <div class="formula-step">
+                    <strong>6. Финальный доход:</strong><br>
+                    dailyIncomeUSD = max(0, 3.1705 - 0.05184) = <strong>3.11866 USD</strong>
+                </div>
+
+                <div class="formula-step">
+                    <strong>7. В BTC:</strong><br>
+                    dailyBtcTotal = 3.11866 / 87,945 ≈ <strong>0.000035464 BTC</strong><br><br>
+                    amount_per_token = 0.000035464 / 100 ≈ <strong>0.00000035464 BTC/token</strong>
+                </div>
+            </div>
+
+            <h2>6. Важные особенности</h2>
+
+            <div class="section">
+                <h3>6.1. ⚠️ КРИТИЧЕСКИ ВАЖНО: Реальная мощность НЕ учитывается!</h3>
+                <div class="important" style="margin-bottom: 20px;">
+                    <strong>ВАЖНОЕ РАЗЪЯСНЕНИЕ:</strong> При распределении дохода система использует ВИРТУАЛЬНЫЕ ТОКЕНЫ пользователей, а НЕ реальную мощность ASIC-майнеров!
+                </div>
+                
+                <p><strong>Как это работает:</strong></p>
+                <ul>
+                    <li><code>total_system_tx = SUM(hashrate)</code> - это сумма всех ТОКЕНОВ пользователей из таблицы <code>users</code></li>
+                    <li><strong>НЕ</strong> используется реальный хешрейт оборудования (ASIC-майнеров)</li>
+                    <li>Распределение дохода происходит пропорционально доле ТОКЕНОВ пользователя в общей сумме токенов</li>
+                    <li>Реальная мощность майнинг пула (из Trustpool API) используется только для расчета <code>THS_BTC_DAY</code></li>
+                </ul>
+
+                <div class="code-block">// Пример:
+// У пользователя: 100 токенов
+// В системе всего: 10,000 токенов
+// Доля пользователя: 100 / 10,000 = 1%
+
+// Доход распределяется по доле токенов (1%),
+// а НЕ по реальной мощности ASIC-майнеров!</div>
+
+                <p><strong>Вывод:</strong> Количество реальных ASIC-майнеров в системе НЕ влияет на распределение дохода между пользователями. Доход распределяется только по доле виртуальных токенов.</p>
+
+                <h3>6.2. Распределение затрат на электроэнергию</h3>
+                <p>Электричество распределяется <strong>пропорционально</strong> доле пользователя в системе (по токенам, не по реальной мощности):</p>
+                <div class="formula">
+                    userElectricityCost = (TX_user / total_system_tx) × totalElectricityCost
+                </div>
+                <p>Это означает, что чем больше у пользователя токенов относительно всей системы, тем большую долю затрат на электроэнергию он несет (независимо от реальной мощности оборудования).</p>
+
+                <h3>6.3. Комиссия платформы</h3>
+                <p>Платформа удерживает <strong>15%</strong> от валового дохода (выплачивается 85%). Комиссия покрывает:</p>
+                <ul>
+                    <li>Операционные расходы платформы</li>
+                    <li>Разработку и поддержку системы</li>
+                    <li>Резервные фонды</li>
+                </ul>
+
+                <h3>6.4. Защита от отрицательных значений</h3>
+                <p>Формула гарантирует, что доход не может быть отрицательным:</p>
+                <div class="formula">
+                    dailyIncomeUSD = max(0, payout - userElectricityCost)
+                </div>
+
+                <h3>6.5. Учет всех токенов</h3>
+                <p>При расчете учитываются <strong>оба типа</strong> токенов:</p>
+                <ul>
+                    <li><code>hashrate</code> - купленные токены</li>
+                    <li><code>game_hashrate</code> или <code>tokens_win</code> - выигранные в играх</li>
+                </ul>
+                <div class="formula">
+                    TX_user = hashrate + game_hashrate
+                </div>
+
+                <h3>6.6. Точность вычислений</h3>
+                <p>Все расчеты выполняются с использованием библиотеки <strong>Decimal.js</strong> для обеспечения точности вычислений с плавающей точкой и избежания ошибок округления.</p>
+            </div>
+
+            <h2>8. Где используется формула</h2>
+
+            <div class="section">
+                <h3>7.1. Ежедневное начисление</h3>
+                <p><strong>Файл:</strong> <code>jobs/AccrualJob.js</code></p>
+                <p>Выполняется ежедневно через cron для каждого пользователя. Рассчитывает и начисляет доход за день.</p>
+
+                <h3>7.2. API статистики начислений</h3>
+                <p><strong>Эндпоинт:</strong> <code>GET /api/twa/accruals/summary</code></p>
+                <p><strong>Файл:</strong> <code>routes/twa/accruals/summary.js</code></p>
+                <p>Используется для отображения статистики доходности в интерфейсе приложения.</p>
+
+                <h3>7.3. Калькулятор доходности</h3>
+                <p><strong>Эндпоинт:</strong> <code>GET /api/twa/calculator/estimate</code></p>
+                <p><strong>Файл:</strong> <code>routes/twa/calculator/estimate.js</code></p>
+                <p>Позволяет пользователям рассчитать потенциальный доход для определенного количества токенов.</p>
+            </div>
+
+            <h2>7. Технические детали</h2>
+
+            <div class="section">
+                <h3>8.1. Функция расчета</h3>
+                <p><strong>Файл:</strong> <code>utils/calculateDailyBTC.js</code></p>
+                <p>Основная функция, реализующая формулу расчета:</p>
+                <div class="code-block">function calculateDailyBTC({
+  txBalance,              // Количество TX у пользователя
+  incomePerTx24h,        // Доход USD за 1 TX за 24 часа
+  electricityTariff,     // Тариф за 1 кВт (USD)
+  energyConsumption,     // Энергопотребление (кВт)
+  totalSystemTx,         // Общее количество TX в системе
+  payoutPercent = 85     // Процент выплаты (по умолчанию 85%)
+})</div>
+
+                <h3>8.2. Расписание обновлений</h3>
+                <ul>
+                    <li><strong>THS_BTC_DAY:</strong> Обновляется ежедневно через cron job (обычно в 12:00 MSK)</li>
+                    <li><strong>Курс BTC:</strong> Обновляется периодически из внешнего источника</li>
+                    <li><strong>Начисления:</strong> Рассчитываются и начисляются ежедневно</li>
+                </ul>
+            </div>
+
+            <h2>9. Подключение Stratum Pool API (Возможность расширения)</h2>
+
+            <div class="section">
+                <h3>Текущая реализация:</h3>
+                <p>Сейчас система использует <strong>Trustpool API (Bitone.tech)</strong> для получения данных о наградах майнинг пула:</p>
+                <ul>
+                    <li>API Endpoint: <code>https://bitone.tech/api/v1/ext/rewards</code></li>
+                    <li>Метод: GET с параметрами <code>coin=btc&from={timestamp}&to={timestamp}</code></li>
+                    <li>Требуется API ключ: <code>x-api-key</code> в заголовках</li>
+                </ul>
+
+                <h3>Возможность подключения Stratum Pool API:</h3>
+                <p>Теоретически можно подключить прямой Stratum Pool API для получения данных о реальном хешрейте оборудования, однако это требует:</p>
+                <ul>
+                    <li>Доступ к API майнинг пула (например, Antpool, F2Pool, ViaBTC и др.)</li>
+                    <li>Аутентификацию с пулом</li>
+                    <li>Обработку данных в формате пула</li>
+                    <li>Синхронизацию с текущей системой расчета</li>
+                </ul>
+
+                <div class="info-box">
+                    <strong>Примечание:</strong> Текущая система использует Trustpool API, который уже предоставляет данные о реальных наградах пула. Подключение прямого Stratum Pool API может быть полезно для получения более детальной информации о реальной мощности оборудования, но это не влияет на распределение дохода между пользователями (так как распределение происходит по токенам, а не по реальной мощности).
+                </div>
+
+                <h3>Где находится код интеграции:</h3>
+                <ul>
+                    <li>Файл: <code>libs/trustpool/index.js</code> - текущая реализация Trustpool API</li>
+                    <li>Файл: <code>cron/accruals.js</code> - использование Trustpool API для получения данных</li>
+                </ul>
+            </div>
+
+            <div class="info-box">
+                <strong>Примечание:</strong> Данный документ описывает текущую реализацию системы расчета доходности. Параметры формулы могут быть изменены администраторами через конфигурацию системы. Все изменения параметров должны быть задокументированы.
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Hash2Cash - Руководство по расчету доходности</p>
+            <p>Версия документа: 1.0 | Последнее обновление: 2025</p>
+        </div>
+    </div>
+</body>
+</html>
+
